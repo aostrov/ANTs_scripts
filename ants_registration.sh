@@ -207,7 +207,7 @@ output=${nm1}_fixed_${nm2%_01}_moving_$antsCallFile
 
 # Generate a registration or move existing registration files to
 # the expected location
-if [[ -z ${pre_existing_rigid} ]] &&[[ -z ${pre_existing_warp} ]] ; then
+if [[ -z ${pre_existing_rigid} ]] && [[ -z ${pre_existing_warp} ]] ; then
 	echo "No pre-existing registrations"
 	echo "Let's create a new registration"
 	
@@ -222,16 +222,16 @@ elif [[ -z ${pre_existing_rigid} ]] || [[ -z ${pre_existing_warp} ]] ; then
 	echo "-w: a pre-existing warp .nii.gz"
 	echo "-r: a pre-existing rigid .mat"
 	echo "Please pass both next time!"
-	exit 99
+	exit 
 else
 	if [[ -s ${pre_existing_rigid} ]] && [[ -s ${pre_existing_warp} ]] ; then
-		mv ${pre_existing_rigid} ${pre_existing_warp} registration/
+		cp ${pre_existing_rigid} ${pre_existing_warp} registration/
 	else
 		echo "There exists one but not both of these files in the path:"
 		echo "a pre-existing warp .nii.gz"
 		echo "a pre-existing affine .mat"
 		echo "Please pass both next time!"
-		exit 99
+		exit 
 	fi
 	
 fi
@@ -242,7 +242,7 @@ if [ $bridging -eq 1 ] ; then
 		# generate compound filename
 		a_name=`basename ${atlas} | cut -d '.' -f 1`
 		nm1="${a_name}_via_${nm1}"
-		mv ${atlas} ${bridging_warp} registration/
+		cp ${atlas} ${bridging_warp} registration/
 	else
 		echo "You passed one but not both of:"
 		echo "an atlas"
