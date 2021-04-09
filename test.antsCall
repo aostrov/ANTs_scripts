@@ -1,0 +1,41 @@
+########################################################################
+# ANTs Call File
+# Orger Lab 2017
+# -----------------
+# Available variables
+# -> ANTs_path
+#       Path to ANTs binaries
+# -> fixed
+#       Fixed image: reference
+# -> moving
+#       Moving image: image to be warped
+# -> output
+#       Output image
+########################################################################
+${ANTs_path}/antsRegistration \
+	-d 3 \
+	--float 1 \
+	-v 1 \
+	--masks [$mask] \
+	-o [registration/${output}] \
+	--interpolation WelchWindowedSinc \
+	--use-histogram-matching 0 \
+	-r [${fixed},${moving},1] \
+	-t rigid[0.1] \
+	-m MI[${fixed},${moving},1,32,Regular,0.25] \
+	-c [200x200x200x0,1e-8,10] \
+	--shrink-factors 12x8x4x2 \
+	--smoothing-sigmas 4x3x2x1vox \
+	-t Affine[0.1] \
+	-m MI[${fixed},${moving},1,32,Regular,0.25] \
+	-c [200x200x0x0,1e-8,10] \
+	--shrink-factors 12x8x4x2 \
+	--smoothing-sigmas 4x3x2x1vox \
+	-t SyN[0.2,6,0.5] \
+	-m CC[${fixed},${moving},1,2] \
+	-c [200x200x200x10,1e-7,10] \
+	--shrink-factors 12x8x4x2 \
+	--smoothing-sigmas 4x3x2x1vox
+
+
+#-r [${fixed},${moving},1] \
