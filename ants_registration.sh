@@ -84,6 +84,18 @@ USAGE
     exit 1
 }
 
+stripEndings(){
+	localEnding=`basename $1`
+	if [[ $localEnding == *.gz ]] || [[ $localEnding == *.tar ]]; then
+		myName=`echo $localEnding | sed -E 's/.gz|.tar//'`
+		stripEndings $myName
+		return 0
+	fi
+	myName=`echo $localEnding | sed 's/\.[[:alnum:]]*$//'`
+	# globalName=$myName
+	echo $myName
+}
+
 # some sensible default values
 thread_number=3
 dryRun=0
@@ -199,8 +211,10 @@ fi
 mkdir -p registration
 
 # Name preparation
-nm1=`basename ${fixed} | cut -d '.' -f 1`
-nm2=`basename ${moving} | cut -d '.' -f 1`
+# nm1=`basename ${fixed} | cut -d '.' -f 1`
+# nm2=`basename ${moving} | cut -d '.' -f 1`
+nm1=`stripEndings ${fixed}`
+nm2=`stripEndings ${moving}`
 
 # Output filename and path
 output=${nm1}_fixed_${nm2%_01}_moving_$antsCallFile
