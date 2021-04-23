@@ -18,7 +18,7 @@
 # - Better/more verbose arguments
 # - Usage of masks
 # - Automatic transformation of Nth channels
-#  - First channel image name must end in _01.[nrrd,nii.gz,tif]
+#  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
 #  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
 
 
@@ -79,6 +79,12 @@ Optional arguments:
 
 -t: Thread number. Set to the number of physical cores in the computer. On the cluster
 	this could be 12. On a personal laptop this is likely to be 4.
+	
+-c: Channel indications (Default 01). Indicates how image channels are indicated, specifically how the 
+	reference channel is indicated. For instance, if tERK is the reference channel
+	`-e terk` would be called, and the program would look for '_terk' at the end
+	of the filename, just before the file extension. As long as the file stems are
+	matching for subsequent files, it does not matter what the channel ending is.
 
 USAGE
     exit 1
@@ -92,7 +98,6 @@ stripEndings(){
 		return 0
 	fi
 	myName=`echo $localEnding | sed 's/\.[[:alnum:]]*$//'`
-	# globalName=$myName
 	echo $myName
 }
 
@@ -104,10 +109,11 @@ bridging=0
 mask=""
 single=2
 outputAs16=1
-# pre_existing_rigid=NULL
-# pre_existing_warp=NULL
-#
-while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:" OPT; do
+regChannel=01
+
+transformationArray=()
+
+while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:c:" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -115,18 +121,28 @@ while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:" OPT; do
 		;;
 		f)
 			fixed=$OPTARG
+			if [[ ! -s $fixed ]] ; then echo "No reference image $fixed"  ; exit ; fi
 		;;
 		A)
 			atlas=$OPTARG
 		;;
 		m)
 			moving=$OPTARG
+			if [[ ! -s $moving ]] ; then echo "No moving image $moving" ; exit ; fi
 		;;
 		x)
 			mask=$OPTARG
 		;;
 		a)
 			antsCallFile=$OPTARG
+			if [[ -z $antsCallFile ]] ; then echo "No antsCall $antsCallFile" ; exit; fi
+			if [[ ! -f $antsCallFile ]] ; then
+			  antsCallFile=$antsCallFile.antsCall
+			  if [[ ! -f $antsCallFile ]] ; then
+			    echo "ANTs call file -a ${antsCallFile} was not found"
+			    exit
+			  fi
+			fi
 		;;
 		p)
 			ANTs_path=$OPTARG
@@ -149,9 +165,16 @@ while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:" OPT; do
 		;;
 		s)
 			single=$OPTARG
+			if [ $single -gt 2 ] ; then
+				echo "-s is outside of range"
+				echo "Please choose from 0, 1, or 2"
+				echo use `basename $0` -h to see a list of valid inputs
 		;;
 		B)
 			outputAs16=$OPTARG
+		;;
+		c)
+			regChannel=$OPTARG
 		;;
 		\?)
 			echo "#########################################"
@@ -189,35 +212,33 @@ export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$thread_number
 if [[ $dryRun -gt 0 ]] ; then
 	echo This is a dry run
 	echo
-fi
-# Set filenames variables
-# fixed=$1 ; moving=$2; mask=$4
-#
-# # Input check
-# if [[ $dryRun -gt 0 ]] ; then
-# 	antsCallFile=$3
-# else
-if [[ ! -s $fixed ]] ; then echo "No reference image $fixed"  ; exit ; fi
-if [[ ! -s $moving ]] ; then echo "No moving image $moving" ; exit ; fi
-if [[ -z $antsCallFile ]] ; then echo "No antsCall $antsCallFile" ; exit; fi
-if [[ ! -f $antsCallFile ]] ; then
-  antsCallFile=$antsCallFile.antsCall
-  if [[ ! -f $antsCallFile ]] ; then
-    echo "ANTs call file -a ${antsCallFile} was not found"
-    exit
-  fi
+else
+	mkdir -p registration
 fi
 
-mkdir -p registration
+
 
 # Name preparation
 # nm1=`basename ${fixed} | cut -d '.' -f 1`
 # nm2=`basename ${moving} | cut -d '.' -f 1`
 nm1=`stripEndings ${fixed}`
 nm2=`stripEndings ${moving}`
+semanticChannelPrimary=`stripEndings ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+
+nm2=`echo ${nm2} | sed 's/_[[:alnum:]]*$//'`
+echo $nm2
 
 # Output filename and path
-output=${nm1}_fixed_${nm2%_01}_moving_$antsCallFile
+output=${nm1}_fixed_${nm2%_${regChannel}}_moving_$antsCallFile
+
+if [[ -s registration/${output}_${semanticChannelPrimary}.nii.gz ]] ; then
+	# first output already exists!
+fi
+
+if [[ -s ${atlas} ]] ; then
+	bridging_output=`stripEndings ${atlas}`_via_${output}
+fi
+
 
 # Generate a registration or move existing registration files to
 # the expected location
@@ -226,7 +247,7 @@ if [[ -z ${pre_existing_rigid} ]] && [[ -z ${pre_existing_warp} ]] ; then
 	echo "Let's create a new registration"
 	
 	if [[ $dryRun -gt 0 ]] ; then
-		echo output file: ${output}_01.nii.gz
+		echo output file: ${output}_${regChannel}.nii.gz
 	else
 		# Call antsRegistration
 		source $antsCallFile
@@ -254,7 +275,8 @@ fi
 if [ $bridging -eq 1 ] ; then
 	if [[ -s ${atlas} ]] && [[ -s ${bridging_warp} ]] ; then
 		# generate compound filename
-		a_name=`basename ${atlas} | cut -d '.' -f 1`
+		# a_name=`basename ${atlas} | cut -d '.' -f 1`
+		a_name=`stripEndings ${atlas}`
 		nm1="${a_name}_via_${nm1}"
 		cp ${atlas} ${bridging_warp} registration/
 	else
@@ -267,28 +289,39 @@ if [ $bridging -eq 1 ] ; then
 fi
 
 if [ $single -eq 2 ] ; then
-	# In the future it might be better to just list
-	# all of the files, rather than counting them.
-	# This would allow for more than 9 channels to
-	# be transformed, but would probably complicate
-	# the logic a bit.
-	range=`ls ${nm2%_01}_* | wc -l`
+	range=(`ls ${nm2}*`)
 elif [ $single -eq 1 ] ; then
-	range=1
+	range=($moving)
 else
 	echo "You have chosen not to transform anything."
 	echo "Exiting"
 	exit
 fi
 
-for i in $(seq 1 $range); do
-	nthChannelIn=${nm2%_01}_0${i}.`basename ${moving##*.}`
-	nthChannelOut=${nm1}_fixed_${nm2%_01}_moving_${antsCallFile}_0${i}.nii.gz
-	if [[ $dryRun -gt 0 ]] ; then
-		echo nthChannelIn: $nthChannelIn
-		echo nthChannelOut: $nthChannelOut
+for i in ${range[@]}; do
+	echo $i
+	nthChannelIn=$i
+	semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+	nthChannelOut=${nm1}_fixed_${nm2}_moving_${antsCallFile}_${semanticChannel}.nii.gz
+	
+	if [[ ! -s registration/$nthChannelOut ]] ; then
+		
+		echo ""
+		echo "Transforming ${nthChannelOut}"
+		echo ""
+	
+		if [[ $dryRun -gt 0 ]] ; then
+			echo nthChannelIn: $nthChannelIn
+			echo nthChannelOut: $nthChannelOut
+		else
+			source antsTransformation.sh		
+		fi
+		
 	else
-		source antsTransformation.sh
+		echo ""
+		echo "${nthChannelOut} already exists."
+		echo "Skipping"
+		echo ""
 	fi
 done
 
