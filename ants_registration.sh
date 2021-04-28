@@ -32,7 +32,8 @@ Usage:
 Compulsory arguments:
 
 -f: File name (including file type) of the template (fixed) image to be used as the 
-	target space for the registration.
+	target space for the registration. '-a' can be substituted for '-f' if a bridging
+	transformation is already fully computed for this input file.
 
 -m: File name (including file type) of the moving image.
 
@@ -45,7 +46,7 @@ Optional arguments:
 -d: Dry run. Outputs the full file names of the output images, but does not run a 
 	registration.
 	
--s: This controls the transformation of the various channels.
+-t: This controls the transformation of the various channels.
 	0: don't run any transformations.
 	1: Transform only the first channel/counterstain channel (often tERK).
 	2: (Default) Transform all available channels that match the naming pattern of the 
@@ -106,9 +107,21 @@ single=2
 outputAs16=1
 regChannel=01
 
-transformationArray=()
+# TODO: check to remove later
+fixed="fakeFixed.nii.gz"
+moving="fakeMoving_01.nrrd"
+antsCallFile="test.antsCall"
 
-while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:c:" OPT; do
+affine=${outputStem}0GenericAffine.mat
+warp=${outputStem}1Warp.nii.gz
+warpFiles=()
+
+bridging_warp="CCU-bridging1Warp.nii.gz"
+atlas="CCU.nrrd"
+# end TODO
+
+
+while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -116,33 +129,23 @@ while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:c:" OPT; do
 		;;
 		f)
 			fixed=$OPTARG
-			if [[ ! -s $fixed ]] ; then echo "No reference image $fixed"  ; exit ; fi
 		;;
 		A)
 			atlas=$OPTARG
 		;;
 		m)
 			moving=$OPTARG
-			if [[ ! -s $moving ]] ; then echo "No moving image $moving" ; exit ; fi
 		;;
 		x)
 			mask=$OPTARG
 		;;
 		a)
 			antsCallFile=$OPTARG
-			if [[ -z $antsCallFile ]] ; then echo "No antsCall $antsCallFile" ; exit; fi
-			if [[ ! -f $antsCallFile ]] ; then
-			  antsCallFile=$antsCallFile.antsCall
-			  if [[ ! -f $antsCallFile ]] ; then
-			    echo "ANTs call file -a ${antsCallFile} was not found"
-			    exit
-			  fi
-			fi
 		;;
 		p)
 			ANTs_path=$OPTARG
 		;;
-		t)
+		T)
 			thread_number=$OPTARG
 		;;
 		d)
@@ -197,6 +200,25 @@ if [[ $OPTIND -eq 1 ]]; then
 	exit 0
 fi
 
+if [[ ! -s $fixed ]] && [[ ! -s ${atlas} ]]; then 
+	echo "No reference image ${fixed}, or atlas image"
+	exit 
+elif  [[ ! -s ${fixed} ]] && [[ -s ${atlas} ]] ; then
+	echo "Setting fixed to: ${atlas}"
+	fixed=${atlas}
+else
+	# do nothing?
+fi
+
+if [[ ! -s $moving ]] ; then echo "No moving image $moving" ; exit ; fi
+if [[ -z $antsCallFile ]] ; then echo "No antsCall $antsCallFile" ; exit; fi
+if [[ ! -f $antsCallFile ]] ; then
+  antsCallFile=$antsCallFile.antsCall
+  if [[ ! -f $antsCallFile ]] ; then
+    echo "ANTs call file -a ${antsCallFile} was not found"
+    exit
+  fi
+fi
 
 
 ########################################################################
@@ -206,105 +228,138 @@ export ANTS_PATH=${ANTs_path}
 # Set multi-threading
 export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$thread_number
 
-# cd "/Users/aostrov/projects/OrgerLab/b2bdb/files_registration"
-# echo changed directory to `pwd`
+outputDir="test"
 
-if [[ $dryRun -gt 0 ]] ; then
-	echo This is a dry run
-	echo
-else
-	mkdir -p registration
-fi
-
-
-
-# Name preparation
-# nm1=`basename ${fixed} | cut -d '.' -f 1`
-# nm2=`basename ${moving} | cut -d '.' -f 1`
-nm1=`stripEndings ${fixed}`
-nm2=`stripEndings ${moving}`
-semanticChannelPrimary=`stripEndings ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
-
-nm2=`echo ${nm2} | sed 's/_[[:alnum:]]*$//'`
-echo $nm2
-
-# Output filename and path
-output=${nm1}_fixed_${nm2%_${regChannel}}_moving_$antsCallFile
-
-if [[ -s registration/${output}_${semanticChannelPrimary}.nii.gz ]] ; then
-	# first output already exists!
-fi
-
-if [[ -s ${atlas} ]] ; then
-	bridging_output=`stripEndings ${atlas}`_via_${output}
-fi
-
-
-# Generate a registration or move existing registration files to
-# the expected location
-if [[ -z ${pre_existing_rigid} ]] && [[ -z ${pre_existing_warp} ]] ; then
-	echo "No pre-existing registrations"
-	echo "Let's create a new registration"
+if [[ ${outputDir} != "" ]] ; then
+	outputDir=`echo ${outputDir}/ | sed 's/ //g'`
+	# echo ${outputDir}
+	mkdir -p ${outputDir}
 	
-	if [[ $dryRun -gt 0 ]] ; then
-		echo output file: ${output}_${regChannel}.nii.gz
+	# rename affine and warp if there is a registration dir with the files
+	# in it...
+	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
+	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
+fi
+registrationOutput=${outputDir}${outputStem}_${semanticChannelPrimary}.nii.gz
+
+# determine if a new registration needs to be done
+if [[ -s ${registrationOutput} ]] ; then
+	echo "output already exists"
+	if [ $bridging -eq 0 ] ; then
+		echo "if no other transforms are needed"
+		echo "or no bridging is going to happen,"
+		echo "exiting"
+		exit 0
 	else
-		# Call antsRegistration
-		source $antsCallFile
+		echo "Moving on to bridging transformation"
 	fi
-elif [[ -z ${pre_existing_rigid} ]] || [[ -z ${pre_existing_warp} ]] ; then
-	echo "You called for one but not both of:"
-	echo "-w: a pre-existing warp .nii.gz"
-	echo "-r: a pre-existing rigid .mat"
-	echo "Please pass both next time!"
-	exit 
+elif ([[ -s ${warp} ]] && [[ -s ${affine} ]]) ; then
+	echo "Warp and affine exist"
+	echo "Skipping to transformations"
+elif [[ -s ${warp} ]] ; then
+	echo "There is a warp, but not an affine for this tranformation,"
+	echo "please supply both."
+	exit 1
+elif [[ -s ${affine} ]] ; then
+	echo "You've passed a single affine transformation."
+	echo "Hopefully all you want is to perform an affine transformation."
+	echo "Skipping to transformations"
 else
-	if [[ -s ${pre_existing_rigid} ]] && [[ -s ${pre_existing_warp} ]] ; then
-		cp ${pre_existing_rigid} ${pre_existing_warp} registration/
-	else
-		echo "There exists one but not both of these files in the path:"
-		echo "a pre-existing warp .nii.gz"
-		echo "a pre-existing affine .mat"
-		echo "Please pass both next time!"
-		exit 
-	fi
+	echo ""
+	echo "Starting registration of ${moving} to ${fixed},"
+	echo "using parameters from ${antsCallFile}"
+	echo ""
+	#######################
+	# Source antsCallFile #
+	#######################
+	# source $antsCallFile
+	echo making $affine
+	affine=${outputDir}$affine
+	command echo fake affine >> $affine
+	
+	echo making $warp
+	warp=${outputDir}$warp
+	command echo fake affine >> $warp
 	
 fi
 
+# Determine if we want to transform
 
-if [ $bridging -eq 1 ] ; then
-	if [[ -s ${atlas} ]] && [[ -s ${bridging_warp} ]] ; then
-		# generate compound filename
-		# a_name=`basename ${atlas} | cut -d '.' -f 1`
-		a_name=`stripEndings ${atlas}`
-		nm1="${a_name}_via_${nm1}"
-		cp ${atlas} ${bridging_warp} registration/
-	else
-		echo "You passed one but not both of:"
-		echo "an atlas"
-		echo "a bridging warp"
-		echo "Please pass both next time!"
-		exit 99
-	fi
-fi
-
-if [ $single -eq 2 ] ; then
-	range=(`ls ${nm2}*`)
+if [ $single -eq 0 ] ; then
+	# we're done here
+	echo "No transformations were requested."
+	echo "Exiting with status 0"
+	exit 0
 elif [ $single -eq 1 ] ; then
+	echo "Only transforming the reference channel."
 	range=($moving)
 else
-	echo "You have chosen not to transform anything."
-	echo "Exiting"
-	exit
+	echo "Proceeding to tranformation of all input images"
+	range=(`ls ${nm2%_${semanticChannelPrimary}}*`)
 fi
 
+# check if warp and affine exist
+if [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
+	echo "Using ${affine} and ${warp} for the transformation"
+	warpFiles+="${warp} ${affine} "
+elif [[ -s ${warp} ]] ; then
+	echo "You only seem to have ${warp} available,"
+	echo "which is rather strange."
+	echo "Proceeding anyway"
+	warpFiles+="${warp} "
+elif [[ -s ${affine} ]] ; then
+	echo "You only seem to have ${affine} available,"
+	echo "hopefully this is what you wanted."
+	echo "Proceeding"
+	warpFiles+="${affine} "
+else
+	echo "You've reached a weird state and have no transformations"
+	echo "to apply to your image."
+	echo "Exiting"
+	exit 2
+fi
+
+# If we do, do we want to bridge to an atlas
+# # confirm atlas and warp-to-atlas exist
+if [ $bridging -eq 1 ] ; then
+	if [[ -s ${atlas} ]] && [[ -s ${bridging_warp} ]] ; then 
+		echo "bridging ${moving} to ${atlas} using ${bridging_warp}"
+	else
+		echo "You want to perform a bridging registration but you have"
+		echo "not provided a target atlas image and a bridging registration"
+		exit 3
+	fi
+	# # update fixed image to reflect the atlas
+	fixed=${atlas}
+	# # prepend warp-to-atlas to warpFiles
+	final_transformation_files=(${bridging_warp})
+	final_transformation_files+=" ${warpFiles}"
+	
+	final_outputStem=`stripEndings ${atlas}`_via_${outputStem}
+else
+	final_transformation_files=${warpFiles}
+	final_outputStem=${outputStem}
+fi
+echo "final transformation: -t ${final_transformation_files}"
+echo ""
+
+# Are we transforming multiple images
+# it doesn't matter, we have our range and we can work with it
+
+# Run the transformations
 for i in ${range[@]}; do
 	echo $i
 	nthChannelIn=$i
 	semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
-	nthChannelOut=${nm1}_fixed_${nm2}_moving_${antsCallFile}_${semanticChannel}.nii.gz
+	nthChannelOut=${final_outputStem}_${semanticChannel}.nii.gz
 	
-	if [[ ! -s registration/$nthChannelOut ]] ; then
+	if [[ -s $nthChannelOut ]] ; then 
+		mv $nthChannelOut ${outputDir}${nthChannelOut}
+	fi
+	
+	nthChannelOut=${outputDir}${nthChannelOut}
+		
+	if [[ ! -s $nthChannelOut ]] ; then
 		
 		echo ""
 		echo "Transforming ${nthChannelOut}"
@@ -313,7 +368,12 @@ for i in ${range[@]}; do
 		if [[ $dryRun -gt 0 ]] ; then
 			echo nthChannelIn: $nthChannelIn
 			echo nthChannelOut: $nthChannelOut
+			command echo nthChannelOut >> $nthChannelOut
 		else
+			#############################
+			# Source antsTransformation #
+			#############################
+			
 			source antsTransformation.sh		
 		fi
 		
@@ -324,4 +384,3 @@ for i in ${range[@]}; do
 		echo ""
 	fi
 done
-
