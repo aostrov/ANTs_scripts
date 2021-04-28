@@ -11,6 +11,8 @@ stripEndings(){
 	echo $myName
 }
 
+echo "################"
+
 
 fixed="fakeFixed.nii.gz"
 moving="fakeMoving_01.nrrd"
@@ -20,6 +22,7 @@ nm1=`stripEndings ${fixed}`
 nm2=`stripEndings ${moving}`
 semanticChannelPrimary=`stripEndings ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
+
 affine=${outputStem}0GenericAffine.mat
 warp=${outputStem}1Warp.nii.gz
 warpFiles=("-t ")
@@ -44,8 +47,10 @@ elif [[ -s ${warp} ]] ; then
 	echo "please supply both."
 	exit 1
 else
+	echo ""
 	echo "Starting registration of ${moving} to ${fixed},"
 	echo "using parameters from ${antsCallFile}"
+	echo ""
 	#######################
 	# Source antsCallFile #
 	#######################
@@ -81,12 +86,10 @@ if [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
 	warpFiles+="${warp} ${affine} "
 fi
 
-echo $warpFiles
-	
-
 # If we do, do we want to bridge to an atlas
 
 # Are we transforming multiple images
+# it doesn't matter, we have our range and we can work with it
 
 # Run the transformations
 
