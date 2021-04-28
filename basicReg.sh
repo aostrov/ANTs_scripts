@@ -23,6 +23,7 @@ nm2=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
 
+
 affine=${outputStem}0GenericAffine.mat
 warp=${outputStem}1Warp.nii.gz
 warpFiles=()
@@ -39,7 +40,7 @@ dryRun=1
 # 1 = only reference channel
 single=2
 
-outputDir=""
+outputDir="test"
 
 if [[ ${outputDir} != "" ]] ; then
 	outputDir=`echo ${outputDir}/ | sed 's/ //g'`
@@ -51,10 +52,10 @@ if [[ ${outputDir} != "" ]] ; then
 	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
 	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
 fi
-
+registrationOutput=${outputDir}${outputStem}_${semanticChannelPrimary}.nii.gz
 
 # determine if a new registration needs to be done
-if [[ -s ${outputStem}_${semanticChannelPrimary}.nii.gz ]] ; then
+if [[ -s ${registrationOutput} ]] ; then
 	echo "output already exists"
 	if [ $bridging -eq 0 ] ; then
 		echo "if no other transforms are needed"

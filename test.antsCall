@@ -17,7 +17,7 @@ ${ANTs_path}/antsRegistration \
 	--float 1 \
 	-v 1 \
 	--masks [$mask] \
-	-o [registration/${output}] \
+	-o [${registrationOutput}] \
 	--interpolation WelchWindowedSinc \
 	--use-histogram-matching 0 \
 	-r [${fixed},${moving},1] \
