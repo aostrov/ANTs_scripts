@@ -153,23 +153,28 @@ while getopts ":hdf:A:m:x:a:p:t:b:w:r:s:B:c:" OPT; do
 			bridging=1
 		;;
 		w)
-			pre_existing_warp=$OPTARG
+			warp=$OPTARG
 		;;
 		r)
-			pre_existing_rigid=$OPTARG
+			affine=$OPTARG
 		;;
-		s)
+		t)
 			single=$OPTARG
 			if [ $single -gt 2 ] ; then
 				echo "-s is outside of range"
 				echo "Please choose from 0, 1, or 2"
 				echo use `basename $0` -h to see a list of valid inputs
+				exit
+			fi
 		;;
 		B)
 			outputAs16=$OPTARG
-		;;
-		c)
-			regChannel=$OPTARG
+			if [ $outputAs16 -gt 1 ] ; then
+				echo "-B is greater than 1,"
+				echo "it must be either 0 or 1"
+				echo use `basename $0` -h to see a list of valid inputs
+				exit
+			fi
 		;;
 		\?)
 			echo "#########################################"
