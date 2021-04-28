@@ -20,7 +20,7 @@ antsCallFile="test.antsCall"
 
 nm1=`stripEndings ${fixed}`
 nm2=`stripEndings ${moving}`
-semanticChannelPrimary=`stripEndings ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+semanticChannelPrimary=`echo ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
 
 affine=${outputStem}0GenericAffine.mat
@@ -76,8 +76,8 @@ elif [ $single -eq 1 ] ; then
 	echo "Only transforming the reference channel."
 	range=($moving)
 else
-	echo "Proceeding to tranformation of images"
-	range=(`ls ${nm2}*`)
+	echo "Proceeding to tranformation of all input images"
+	range=(`ls ${nm2%_${semanticChannelPrimary}}*`)
 fi
 
 # check if warp and affine exist
