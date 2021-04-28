@@ -27,25 +27,54 @@ affine=${outputStem}0GenericAffine.mat
 warp=${outputStem}1Warp.nii.gz
 warpFiles=()
 
+bridging=0
+bridging_warp="CCU-bridging1Warp.nii.gz"
+atlas="CCU.nrrd"
+
+
+dryRun=1
+
 # 2 = all channels
 # 0 = no channels
 # 1 = only reference channel
 single=2
 
+outputDir=""
+
+if [[ ${outputDir} != "" ]] ; then
+	outputDir=`echo ${outputDir}/ | sed 's/ //g'`
+	# echo ${outputDir}
+	mkdir -p ${outputDir}
+	
+	# rename affine and warp if there is a registration dir with the files
+	# in it...
+	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
+	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
+fi
+
+
 # determine if a new registration needs to be done
 if [[ -s ${outputStem}_${semanticChannelPrimary}.nii.gz ]] ; then
 	echo "output already exists"
-	echo "if no other transforms are needed"
-	echo "or no bridging is going to happen,"
-	echo "exiting"
-	# exit 0
-elif [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
+	if [ $bridging -eq 0 ] ; then
+		echo "if no other transforms are needed"
+		echo "or no bridging is going to happen,"
+		echo "exiting"
+		exit 0
+	else
+		echo "Moving on to bridging transformation"
+	fi
+elif ([[ -s ${warp} ]] && [[ -s ${affine} ]]) ; then
 	echo "Warp and affine exist"
 	echo "Skipping to transformations"
 elif [[ -s ${warp} ]] ; then
 	echo "There is a warp, but not an affine for this tranformation,"
 	echo "please supply both."
 	exit 1
+elif [[ -s ${affine} ]] ; then
+	echo "You've passed a single affine transformation."
+	echo "Hopefully all you want is to perform an affine transformation."
+	echo "Skipping to transformations"
 else
 	echo ""
 	echo "Starting registration of ${moving} to ${fixed},"
@@ -56,11 +85,11 @@ else
 	#######################
 	# source $antsCallFile
 	echo making $affine
-	command touch $affine
+	affine=${outputDir}$affine
 	command echo fake affine >> $affine
 	
 	echo making $warp
-	command touch $warp
+	warp=${outputDir}$warp
 	command echo fake affine >> $warp
 	
 fi
@@ -129,6 +158,43 @@ echo ""
 # it doesn't matter, we have our range and we can work with it
 
 # Run the transformations
+for i in ${range[@]}; do
+	echo $i
+	nthChannelIn=$i
+	semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+	nthChannelOut=${final_outputStem}_${semanticChannel}.nii.gz
+	
+	if [[ -s $nthChannelOut ]] ; then 
+		mv $nthChannelOut ${outputDir}${nthChannelOut}
+	fi
+	
+	nthChannelOut=${outputDir}${nthChannelOut}
+		
+	if [[ ! -s $nthChannelOut ]] ; then
+		
+		echo ""
+		echo "Transforming ${nthChannelOut}"
+		echo ""
+	
+		if [[ $dryRun -gt 0 ]] ; then
+			echo nthChannelIn: $nthChannelIn
+			echo nthChannelOut: $nthChannelOut
+			command echo nthChannelOut >> $nthChannelOut
+		else
+			#############################
+			# Source antsTransformation #
+			#############################
+			
+			source antsTransformation.sh		
+		fi
+		
+	else
+		echo ""
+		echo "${nthChannelOut} already exists."
+		echo "Skipping"
+		echo ""
+	fi
+done
 
 # echo nm1: $nm1
 # echo nm2: $nm2
