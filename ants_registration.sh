@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 
 # Orger Lab, 2017
@@ -45,6 +45,8 @@ Optional arguments:
 
 -d: Dry run. Outputs the full file names of the output images, but does not run a 
 	registration.
+	
+-o: Output directory. Defaults to "registration".
 	
 -t: This controls the transformation of the various channels.
 	0: don't run any transformations.
@@ -106,6 +108,7 @@ mask=""
 single=2
 outputAs16=1
 regChannel=01
+outputDir="registration"
 
 # TODO: check to remove later
 fixed="fakeFixed.nii.gz"
@@ -121,7 +124,7 @@ atlas="CCU.nrrd"
 # end TODO
 
 
-while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:" OPT; do
+while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -174,10 +177,13 @@ while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:" OPT; do
 			outputAs16=$OPTARG
 			if [ $outputAs16 -gt 1 ] ; then
 				echo "-B is greater than 1,"
-				echo "it must be either 0 or 1"
+				echo "it must be either 0 (32bit output image) or 1 (16bit output image)"
 				echo use `basename $0` -h to see a list of valid inputs
 				exit
 			fi
+		;;
+		o)
+			outputDir=$OPTARG
 		;;
 		\?)
 			echo "#########################################"
@@ -208,6 +214,7 @@ elif  [[ ! -s ${fixed} ]] && [[ -s ${atlas} ]] ; then
 	fixed=${atlas}
 else
 	# do nothing?
+	echo ""
 fi
 
 if [[ ! -s $moving ]] ; then echo "No moving image $moving" ; exit ; fi
@@ -228,7 +235,16 @@ export ANTS_PATH=${ANTs_path}
 # Set multi-threading
 export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$thread_number
 
-outputDir="test"
+
+nm1=`stripEndings ${fixed}`
+nm2=`stripEndings ${moving}`
+semanticChannelPrimary=`echo ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
+
+affine=${outputStem}0GenericAffine.mat
+warp=${outputStem}1Warp.nii.gz
+warpFiles=()
+
 
 if [[ ${outputDir} != "" ]] ; then
 	outputDir=`echo ${outputDir}/ | sed 's/ //g'`
@@ -238,9 +254,12 @@ if [[ ${outputDir} != "" ]] ; then
 	# rename affine and warp if there is a registration dir with the files
 	# in it...
 	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
-	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
+	if [[ -s ${outputDir}${affine} ]] ; then 
+		affine=${outputDir}${affine}
+		echo $affine
+	fi
 fi
-registrationOutput=${outputDir}${outputStem}_${semanticChannelPrimary}.nii.gz
+registrationOutput=${outputDir}${outputStem}
 
 # determine if a new registration needs to be done
 if [[ -s ${registrationOutput} ]] ; then
@@ -272,14 +291,15 @@ else
 	#######################
 	# Source antsCallFile #
 	#######################
-	# source $antsCallFile
-	echo making $affine
-	affine=${outputDir}$affine
-	command echo fake affine >> $affine
+	source $antsCallFile
 	
-	echo making $warp
+	# echo making $affine
+	affine=${outputDir}$affine
+	# command echo fake affine >> $affine
+	#
+	# echo making $warp
 	warp=${outputDir}$warp
-	command echo fake affine >> $warp
+	# command echo fake affine >> $warp
 	
 fi
 
@@ -297,6 +317,7 @@ else
 	echo "Proceeding to tranformation of all input images"
 	range=(`ls ${nm2%_${semanticChannelPrimary}}*`)
 fi
+
 
 # check if warp and affine exist
 if [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
