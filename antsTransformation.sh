@@ -3,7 +3,7 @@
 # Apply generated transforms to register to reference
 
 ${ANTs_path}/antsApplyTransforms \
-	-d 3 \
+	-d 2 \
 	-v 1 \
 	--float 1 \
 	-n WelchWindowedSinc \
