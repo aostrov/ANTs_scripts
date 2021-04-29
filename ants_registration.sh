@@ -5,7 +5,7 @@
 # ANTs whole brain registration bash script
 #
 # usage: 
-#     antsRunRegistration reference moving antsCall
+#     antsRunRegistration -f Template/Fixed Image -m Moving Image -a ANTsCallFile <other options>
 #
 #
 # HARDCODED USER OPTIONS, ADJUST TO NEED
@@ -20,14 +20,24 @@
 # - Automatic transformation of Nth channels
 #  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
 #  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
-
+# Updated 2021.
+# Channels are now figured out automatically, but must confirm to the patter:
+#    basename_label.[nrrd,nii.gz,tif] with the '_label' being the key information.
+#    'label' can be anything: '01' or 'terk' or 'a' as desired. The registration
+#    will be driven by the image passed with the '-m' option.
+# Arbitrary warp and affine registration files cannot be used to drive transformations
+# for arbitrary images, hopefully that is ready soon.
+# Bridging should work, but is untested
+# The script will look for files in the current directory, or in the subdirectory indicated
+# by the '-o' option. Files will be saved into the current directory, or the directory
+# indicated by the '-o' option.
 
 function Usage {
     cat <<USAGE
 
 Usage:
 
-`basename $0` -f [Template/Fixed Image] -m [Moving Image] -a ANTsCallFile <other options>
+`basename $0` -f Template/Fixed Image -m Moving Image -a ANTsCallFile <other options>
 
 Compulsory arguments:
 
