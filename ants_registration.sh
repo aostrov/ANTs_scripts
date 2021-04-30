@@ -25,8 +25,11 @@
 #    basename_label.[nrrd,nii.gz,tif] with the '_label' being the key information.
 #    'label' can be anything: '01' or 'terk' or 'a' as desired. The registration
 #    will be driven by the image passed with the '-m' option.
-# Arbitrary warp and affine registration files cannot be used to drive transformations
-# for arbitrary images, hopefully that is ready soon.
+# ~~Arbitrary warp and affine registration files cannot be used to drive transformations
+# for arbitrary images, hopefully that is ready soon~~.
+# Warp and affine files for their associated image can be in arbitrary locations if they are 
+# passed with the '-r' and '-w' flags, otherwise the script looks at the current directory and
+# the directory passed with the '-o' option
 # Bridging should work, but is untested
 # The script will look for files in the current directory, or in the subdirectory indicated
 # by the '-o' option. Files will be saved into the current directory, or the directory
