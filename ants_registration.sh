@@ -264,7 +264,7 @@ if [[ ${outputDir} != "" ]] ; then
 	# not sure if I need to strip white spaces, in fact,
 	# it could confuse things later on. Maybe better to just
 	# be careful with how I call outputDir in all future calls
-	outputDir=`echo ${outputDir}/ | sed 's/ //g'`
+	# outputDir=`echo ${outputDir}/ | sed 's/ //g'`
 	# echo ${outputDir}
 	mkdir -p ${outputDir}
 	
