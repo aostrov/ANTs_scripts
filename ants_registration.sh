@@ -244,8 +244,19 @@ nm2=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
 
-affine=${outputStem}0GenericAffine.mat
-warp=${outputStem}1Warp.nii.gz
+if [[ $affine == "" ]] ; then
+	echo "affine is undefined"
+	affine=${outputStem}0GenericAffine.mat
+	echo "setting affine to ${affine}"
+fi
+
+if [[ ${warp} == "" ]] ; then
+	echo "warp is undefined"
+	warp=${outputStem}1Warp.nii.gz
+	echo "setting warp to ${warp}"
+fi
+
+
 warpFiles=()
 
 
