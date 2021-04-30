@@ -130,7 +130,7 @@ atlas="CCU.nrrd"
 # end TODO
 
 
-while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
+while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:9" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -190,6 +190,9 @@ while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
 		;;
 		o)
 			outputDir=$OPTARG
+		;;
+		9)
+			slackChannel="UCMF28KL6"
 		;;
 		\?)
 			echo "#########################################"
@@ -425,3 +428,13 @@ for i in ${range[@]}; do
 		echo ""
 	fi
 done
+
+if [[ ${slackChannel} != "" ]] ; then
+	webhook_url="https://hooks.slack.com/services/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"
+	channel="UCMF28KL6"
+	username="curl2slack"
+	text="ANTs apply transforms job completed. "
+	escapedText=$(echo $text | sed 's/"/\"/g' | sed "s/'/\'/g" )
+	json="{\"channel\": \"$channel\", \"username\":\"$username\", \"text\": \"$escapedText\"}"
+	curl -s -d "payload=$json" "$webhook_url" > /dev/null
+fi
