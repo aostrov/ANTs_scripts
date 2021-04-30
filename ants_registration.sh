@@ -119,16 +119,9 @@ single=2
 outputAs16=1
 regChannel=01
 outputDir="registration"
-
-# TODO: check to remove later
-fixed="fakeFixed.nii.gz"
-moving="fakeMoving_01.nrrd"
-antsCallFile="test.antsCall"
-
-affine=${outputStem}0GenericAffine.mat
-warp=${outputStem}1Warp.nii.gz
 warpFiles=()
 
+# TODO: check to remove later
 bridging_warp="CCU-bridging1Warp.nii.gz"
 atlas="CCU.nrrd"
 # end TODO
