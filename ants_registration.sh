@@ -427,6 +427,14 @@ for i in ${range[@]}; do
 				-t ${final_transformation_files}
 
 			# Convert to 16bit from 32bit
+		    # TYPE-OPTION  :  TYPE
+		    #  0  :  char
+		    #  1  :  unsigned char
+		    #  2  :  short
+		    #  3  :  unsigned short
+		    #  4  :  int
+		    #  5  :  unsigned int
+			
 			if [[ $outputAs16 -gt 0 ]] ; then
 				echo ""
 				echo "Converting to 16bit"
