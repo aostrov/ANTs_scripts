@@ -472,10 +472,17 @@ for i in ${range}; do
 		    #  5  :  unsigned int
 			
 			if [[ $outputAs16 -gt 0 ]] ; then
-				echo ""
-				echo "Converting to 16bit"
-				echo ""
-				ConvertImagePixelType ${nthChannelOut} ${nthChannelOut} 3
+				if [[ -s ${nthChannelOut} ]] ; then 
+					echo ""
+					echo "Converting to 16bit"
+					echo ""
+					ConvertImagePixelType ${nthChannelOut} ${nthChannelOut} 3
+				else
+					echo "${nthChannelOut} does not exist,"
+					echo "this is weird!"
+					echo "Skipping conversion to 16bit..."
+					echo ""
+				fi
 			fi
 					
 		fi
