@@ -24,6 +24,7 @@
 #    basename_label.[nrrd,nii.gz,tif] with the '_label' being the key information.
 #    'label' can be anything: '01' or 'terk' or '🐟' as desired. The registration
 #    will be driven by the image passed with the '-m' option.
+#	 NB: There's not guarantee that emojis will work in bash, sorry.
 # ~~Arbitrary warp and affine registration files cannot be used to drive transformations
 # for arbitrary images, hopefully that is ready soon~~.
 # Warp and affine files for their associated image can be in arbitrary locations if they are 
@@ -119,11 +120,10 @@ bridging=0
 mask=""
 single=2
 outputAs16=1
-regChannel=01
 outputDir="registration"
 existing_outputs=0
 all_outputs_exist=0
-# warpFiles=()
+dimensions=3
 
 # TODO: check to remove later
 bridging_warp="CCU-bridging1Warp.nii.gz"
@@ -131,7 +131,7 @@ atlas="CCU.nrrd"
 # end TODO
 
 
-while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
+while getopts ":hdjf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -191,6 +191,9 @@ while getopts ":hdf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
 		;;
 		o)
 			outputDir=$OPTARG
+		;;
+		j)
+			dimensions=2
 		;;
 		\?)
 			echo "#########################################"
@@ -447,7 +450,7 @@ for i in ${range}; do
 			############################
 			
 			${ANTs_path}/antsApplyTransforms \
-				-d 2 \
+				-d $dimensions \
 				-v 1 \
 				--float 1 \
 				-n WelchWindowedSinc \
