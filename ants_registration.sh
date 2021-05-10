@@ -89,7 +89,8 @@ Optional arguments:
 	for the moving image; arbitrary file names cannot currently be used.**
 	
 -r: A rigid initial alignment file previously generated with ANTs/ITK. This will be used to 
-	transform and images passed along with this. The file should be in '.mat' format. 
+	transform and images passed along with this. The file can be in '.mat' or '.txt' format,
+	though it's much more likely you'll have it as a '.mat'. 
 	Must be passed with the -w option.
 
 -A: The atlas template that is being bridged to. If '-b' is not set, this does nothing.
