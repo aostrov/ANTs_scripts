@@ -281,16 +281,48 @@ fi
 # registrationOutput = registration/${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 registrationOutput=${outputDir}${outputStem}
 
+#######################
+### Input -> Output ###
+#######################
+if [ $single -eq 0 ] ; then
+	# we're done here
+	echo "No transformations were requested."
+elif [ $single -eq 1 ] ; then
+	echo "Only transform the reference channel."
+	range=$moving
+else
+	echo "Tranformation of all input images"
+	range=`ls ${moving_stem%_${semanticChannelPrimary}}*`
+	total_images=`echo $range | wc -w`
+
+	for i in ${range}; do
+		# check if output files exist
+		semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+		if [[ -s ${registrationOutput}_${semanticChannel}.nii.gz ]] ; then
+			((existing_outputs=existing_outputs + 1))
+		fi
+	done
+
+	if [ $existing_outputs -eq $total_images ] ; then
+		all_outputs_exists=1
+	else
+		all_outputs_exists=0
+	fi
+
+fi
+
+
 # determine if a new registration needs to be done
-if [[ -s ${registrationOutput} ]] ; then
-	echo "output already exists"
+# TODO: I think I need to do a few additional checks here
+if [ $all_outputs_exists -eq 1 ] ; then
+	echo "All tranformed images already exist."
 	if [ $bridging -eq 0 ] ; then
-		echo "if no other transforms are needed"
-		echo "or no bridging is going to happen,"
+		echo "No bridging was requested,"
 		echo "exiting"
 		exit 0
 	else
-		echo "Moving on to bridging transformation"
+		echo "Moving on to bridging transformation(s)."
+		echo ""
 	fi
 elif ([[ -s ${warp} ]] && [[ -s ${affine} ]]) ; then
 	echo "Warp and affine exist"
