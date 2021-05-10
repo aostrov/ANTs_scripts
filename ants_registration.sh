@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-
+echo "very start of the script"
 # Orger Lab, 2017
 # ANTs whole brain registration bash script
 #
@@ -268,7 +268,7 @@ if [[ ${outputDir} != "" ]] ; then
 	# it could confuse things later on. Maybe better to just
 	# be careful with how I call outputDir in all future calls
 	outputDir=${outputDir}/
-	# echo ${outputDir}
+	echo ${outputDir}
 	mkdir -p ${outputDir}
 	
 	# rename affine and warp if there is a registration dir with the files
