@@ -324,7 +324,7 @@ if [ $all_outputs_exists -eq 1 ] ; then
 		echo "Moving on to bridging transformation(s)."
 		echo ""
 	fi
-elif ([[ -s ${warp} ]] && [[ -s ${affine} ]]) ; then
+elif [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
 	echo "Warp and affine exist"
 	echo "Skipping to transformations"
 	echo " "
