@@ -33,7 +33,7 @@ ${ANTs_path}/antsRegistration \
 	--smoothing-sigmas 4x3x2x1vox \
 	-t SyN[0.2,6,0.5] \
 	-m CC[${fixed},${moving},1,2] \
-	-c [200x200x200x10,1e-7,10] \
+	-c [200x200x200x0,1e-7,10] \
 	--shrink-factors 12x8x4x2 \
 	--smoothing-sigmas 4x3x2x1vox
 
