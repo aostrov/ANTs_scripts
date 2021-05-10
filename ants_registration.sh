@@ -346,13 +346,8 @@ else
 	#######################
 	source $antsCallFile
 	
-	# echo making $affine
-	affine=${outputDir}${affine}
-	# command echo fake affine >> $affine
-	#
-	# echo making $warp
-	warp=${outputDir}${warp}
-	# command echo fake affine >> $warp
+	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
+	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
 	
 fi
 
