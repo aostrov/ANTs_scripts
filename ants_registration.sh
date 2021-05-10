@@ -34,7 +34,7 @@
 # by the '-o' option. Files will be saved into the current directory, or the directory
 # indicated by the '-o' option.
 
-function Usage {
+Usage() {
     cat <<USAGE
 
 Usage:
@@ -259,7 +259,7 @@ if [[ ${warp} == "" ]] ; then
 fi
 
 
-warpFiles=()
+warpFiles=""
 
 
 if [[ ${outputDir} != "" ]] ; then
@@ -339,17 +339,18 @@ fi
 # check if warp and affine exist
 if [[ -s ${warp} ]] && [[ -s ${affine} ]] ; then
 	echo "Using ${affine} and ${warp} for the transformation"
-	warpFiles+="${warp} ${affine} "
+	echo ""
+	warpFiles="${warp} ${affine}"
 elif [[ -s ${warp} ]] ; then
 	echo "You only seem to have ${warp} available,"
 	echo "which is rather strange."
 	echo "Proceeding anyway"
-	warpFiles+="${warp} "
+	warpFiles="${warp}"
 elif [[ -s ${affine} ]] ; then
 	echo "You only seem to have ${affine} available,"
 	echo "hopefully this is what you wanted."
 	echo "Proceeding"
-	warpFiles+="${affine} "
+	warpFiles="${affine}"
 else
 	echo "You've reached a weird state and have no transformations"
 	echo "to apply to your image."
@@ -370,8 +371,8 @@ if [ $bridging -eq 1 ] ; then
 	# # update fixed image to reflect the atlas
 	fixed=${atlas}
 	# # prepend warp-to-atlas to warpFiles
-	final_transformation_files=(${bridging_warp})
-	final_transformation_files+=" ${warpFiles}"
+	final_transformation_files=${bridging_warp}
+	final_transformation_files="${final_transformation_files} ${warpFiles}"
 	
 	final_outputStem=`stripEndings ${atlas}`_via_${outputStem}
 else
@@ -387,8 +388,8 @@ echo "Files that might be transformed: ${range}"
 echo ""
 
 # Run the transformations
-for i in ${range[@]}; do
-	echo $i
+for i in ${range}; do
+	echo "input image: ${i}"
 	nthChannelIn=$i
 
 	# command ls -al 
@@ -407,7 +408,7 @@ for i in ${range[@]}; do
 		echo ""
 		echo "Transforming ${nthChannelOut}"
 		echo ""
-	
+
 		if [[ $dryRun -gt 0 ]] ; then
 			echo nthChannelIn: $nthChannelIn
 			echo nthChannelOut: $nthChannelOut
