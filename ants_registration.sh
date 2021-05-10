@@ -1,6 +1,5 @@
 #!/bin/sh
 #
-echo "very start of the script"
 # Orger Lab, 2017
 # ANTs whole brain registration bash script
 #
@@ -268,7 +267,7 @@ if [[ ${outputDir} != "" ]] ; then
 	# it could confuse things later on. Maybe better to just
 	# be careful with how I call outputDir in all future calls
 	outputDir=${outputDir}/
-	echo ${outputDir}
+	echo "outputDir is: ${outputDir}"
 	mkdir -p ${outputDir}
 	
 	# rename affine and warp if there is a registration dir with the files
@@ -295,6 +294,7 @@ if [[ -s ${registrationOutput} ]] ; then
 elif ([[ -s ${warp} ]] && [[ -s ${affine} ]]) ; then
 	echo "Warp and affine exist"
 	echo "Skipping to transformations"
+	echo " "
 elif [[ -s ${warp} ]] ; then
 	echo "There is a warp, but not an affine for this tranformation,"
 	echo "please supply both."
@@ -330,12 +330,9 @@ if [ $single -eq 0 ] ; then
 	echo "No transformations were requested."
 	echo "Exiting with status 0"
 	exit 0
-elif [ $single -eq 1 ] ; then
-	echo "Only transforming the reference channel."
-	range=($moving)
 else
-	echo "Proceeding to tranformation of all input images"
-	range=(`ls ${nm2%_${semanticChannelPrimary}}*`)
+	echo "Proceeding to tranformation of input image(s)"
+	echo ""
 fi
 
 
@@ -386,11 +383,16 @@ echo ""
 
 # Are we transforming multiple images
 # it doesn't matter, we have our range and we can work with it
+echo "Files that might be transformed: ${range}"
+echo ""
 
 # Run the transformations
 for i in ${range[@]}; do
 	echo $i
 	nthChannelIn=$i
+
+	# command ls -al 
+
 	semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 	nthChannelOut=${final_outputStem}_${semanticChannel}.nii.gz
 	
