@@ -20,9 +20,9 @@
 #  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
 #  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
 # Updated 2021.
-# Channels are now figured out automatically, but must confirm to the patter:
+# Channels are now parsed automatically, but must confirm to the pattern:
 #    basename_label.[nrrd,nii.gz,tif] with the '_label' being the key information.
-#    'label' can be anything: '01' or 'terk' or 'a' as desired. The registration
+#    'label' can be anything: '01' or 'terk' or '🐟' as desired. The registration
 #    will be driven by the image passed with the '-m' option.
 # ~~Arbitrary warp and affine registration files cannot be used to drive transformations
 # for arbitrary images, hopefully that is ready soon~~.
