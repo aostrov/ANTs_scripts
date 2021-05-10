@@ -121,7 +121,9 @@ single=2
 outputAs16=1
 regChannel=01
 outputDir="registration"
-warpFiles=()
+existing_outputs=0
+all_outputs_exist=0
+# warpFiles=()
 
 # TODO: check to remove later
 bridging_warp="CCU-bridging1Warp.nii.gz"
@@ -241,10 +243,10 @@ export ANTS_PATH=${ANTs_path}
 export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$thread_number
 
 
-nm1=`stripEndings ${fixed}`
-nm2=`stripEndings ${moving}`
-semanticChannelPrimary=`echo ${nm2} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
-outputStem=${nm1}_fixed_${nm2%_${semanticChannelPrimary}}_moving_$antsCallFile
+fixed_stem=`stripEndings ${fixed}`
+moving_stem=`stripEndings ${moving}`
+semanticChannelPrimary=`echo ${moving_stem} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+outputStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 
 if [[ $affine == "" ]] ; then
 	echo "affine is undefined"
@@ -273,11 +275,10 @@ if [[ ${outputDir} != "" ]] ; then
 	# rename affine and warp if there is a registration dir with the files
 	# in it...
 	if [[ -s ${outputDir}${warp} ]] ; then warp=${outputDir}${warp} ; fi
-	if [[ -s ${outputDir}${affine} ]] ; then 
-		affine=${outputDir}${affine}
-		echo $affine
-	fi
+	if [[ -s ${outputDir}${affine} ]] ; then affine=${outputDir}${affine} ; fi
 fi
+
+# registrationOutput = registration/${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 registrationOutput=${outputDir}${outputStem}
 
 # determine if a new registration needs to be done
