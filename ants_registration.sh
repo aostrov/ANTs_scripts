@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 echo "very start of the script"
 # Orger Lab, 2017
