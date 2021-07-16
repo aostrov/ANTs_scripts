@@ -6,19 +6,6 @@
 # usage: 
 #     antsRunRegistration -f Template/Fixed Image -m Moving Image -a ANTsCallFile <other options>
 #
-#
-# HARDCODED USER OPTIONS, ADJUST TO NEED
-# -> ANTs_path
-#   	Path to ANTs binaries
-# -> thread_number
-#   	Controls multi-threading. Set to the number of physical
-#   	cores in the computer
-# Updated 2019-2020.
-# - Better/more verbose arguments
-# - Usage of masks
-# - Automatic transformation of Nth channels
-#  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
-#  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
 # Updated 2021.
 # Channels are now parsed automatically, but must confirm to the pattern:
 #    basename_label.[nrrd,nii.gz,tif] with the '_label' being the key information.
@@ -34,6 +21,19 @@
 # The script will look for files in the current directory, or in the subdirectory indicated
 # by the '-o' option. Files will be saved into the current directory, or the directory
 # indicated by the '-o' option.
+#
+# HARDCODED USER OPTIONS, ADJUST TO NEED
+# -> ANTs_path
+#   	Path to ANTs binaries
+# -> thread_number
+#   	Controls multi-threading. Set to the number of physical
+#   	cores in the computer
+# Updated 2019-2020.
+# - Better/more verbose arguments
+# - Usage of masks
+# - Automatic transformation of Nth channels
+#  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
+#  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
 
 Usage() {
     cat <<USAGE
