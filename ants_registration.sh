@@ -297,23 +297,24 @@ elif [ $single -eq 1 ] ; then
 else
 	echo "Tranformation of all input images"
 	range=`ls ${moving_stem%_${semanticChannelPrimary}}*`
-	total_images=`echo $range | wc -w`
-
-	for i in ${range}; do
-		# check if output files exist
-		semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
-		if [[ -s ${registrationOutput}_${semanticChannel}.nii.gz ]] ; then
-			((existing_outputs=existing_outputs + 1))
-		fi
-	done
-
-	if [ $existing_outputs -eq $total_images ] ; then
-		all_outputs_exists=1
-	else
-		all_outputs_exists=0
-	fi
-
 fi
+
+total_images=`echo $range | wc -w`
+
+for i in ${range}; do
+	# check if output files exist
+	semanticChannel=`stripEndings ${i} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+	if [[ -s ${registrationOutput}_${semanticChannel}.nii.gz ]] ; then
+		((existing_outputs=existing_outputs + 1))
+	fi
+done
+
+if [ $existing_outputs -eq $total_images ] ; then
+	all_outputs_exists=1
+# else
+# 	all_outputs_exists=0
+fi
+
 
 
 # determine if a new registration needs to be done
