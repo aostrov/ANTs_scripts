@@ -126,10 +126,7 @@ if [[ $OPTIND -eq 1 ]]; then
 	exit 0
 fi
 
-if [[ ! -s $semanticChannelPrimary ]]; 
-then
-	semanticChannelPrimary="01"
-fi
+mkdir -p logs
 
 stripEndings(){
 	# remove path information
@@ -164,9 +161,9 @@ echo "docker_image = ${dockerImage}" >> ${outfile}
 echo "executable = ${initialdir}/commands/ants_registration.sh" >> ${outfile}
 echo "request_cpus = ${cpus}" >> ${outfile}
 echo "request_memory = ${requestedMemory}" >> ${outfile}
-echo "Error = output/logs/\$(Cluster).\$(Process).err" >> ${outfile}
-echo "Output = output/logs/\$(Cluster).\$(Process).out" >> ${outfile}
-echo "Log = output/logs/\$(Cluster).\$(Process).log" >> ${outfile}
+echo "Error = logs/\$(Cluster).\$(Process).err" >> ${outfile}
+echo "Output = logs/\$(Cluster).\$(Process).out" >> ${outfile}
+echo "Log = logs/\$(Cluster).\$(Process).log" >> ${outfile}
 echo "initialdir = ${initialdir}" >> ${outfile}
 echo "" >> ${outfile}
 
