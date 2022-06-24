@@ -123,7 +123,7 @@ single=2
 outputAs16=1
 outputDir="registration"
 existing_outputs=0
-all_outputs_exist=0
+all_outputs_exists=0
 dimensions=3
 
 # TODO: check to remove later
@@ -252,13 +252,13 @@ moving_stem=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${moving_stem} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 
-if [[ $affine == "" ]] ; then
+if [[ -z $affine ]] ; then
 	echo "affine is undefined"
 	affine=${outputStem}0GenericAffine.mat
 	echo "setting affine to ${affine}"
 fi
 
-if [[ ${warp} == "" ]] ; then
+if [[ -z ${warp} ]] ; then
 	echo "warp is undefined"
 	warp=${outputStem}1Warp.nii.gz
 	echo "setting warp to ${warp}"
