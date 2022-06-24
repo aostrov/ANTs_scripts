@@ -33,7 +33,7 @@ Optional arguments:
 -T: [Default=12] Thread number. Set to the number of physical cores in the computer. On the cluster
 	this could be 12 or more. On a personal laptop this is likely to be 4.
 -M: [Default=128000] Memory to request per process. In megabytes.
--d: Docker image
+-d: Docker image. Defaults to 'docker-registry.champalimaud.pt/ants'
 
 -------------------------------------------------------
 Not Implemented, but possible:
