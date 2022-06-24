@@ -146,7 +146,23 @@ stripEndings(){
 	echo $myName
 }
 
+relative2myArea(){
+        localEnding=`basename $1`
+        previousEnding=$2
+        if [ $localEnding != "my_area" ]; then
+                dir=`dirname $1`
+                newPath="${localEnding}/${previousEnding}"
+                relative2myArea $dir $newPath
+                return 0
+        fi
+        echo "${localEnding}/${previousEnding}"
+}
+
+
 initialdir=`pwd`
+execDir=`relative2myArea $initialdir`
+execDir2=`echo $initialdir | sed 's/^[\/[[:alnum:]]*\/]*\(my_area[\/[[:alnum:]]*]*$\)/\1/'`
+
 cpus=$thread_number
 requestedMemory=$memory_requested
 images=`ls images/*.${fileExtension} | tr "\n" "," | sed -E s/,$//`
@@ -159,7 +175,7 @@ outfile="${outputDir}/${outputName}.submit"
 # write header info
 echo "universe = docker" > ${outfile}
 echo "docker_image = ${dockerImage}" >> ${outfile}
-echo "executable = ${initialdir}/commands/ants_registration.sh" >> ${outfile}
+echo "executable = ${execDir}ants_registration.sh" >> ${outfile}
 echo "request_cpus = ${cpus}" >> ${outfile}
 echo "request_memory = ${requestedMemory}" >> ${outfile}
 echo "Error = logs/\$(Cluster).\$(Process).err" >> ${outfile}
