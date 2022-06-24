@@ -156,18 +156,19 @@ refbrain="refbrain/${fixed}"
 antscall="commands/${antsCallFile}"
 # transferFiles=${images},${refbrain},${antscall}
 dockerOutdir="registration"
+outfile="${outputDir}/${outputName}.submit"
 
 # write header info
-echo "universe = docker" > "${outputDir}/${outputName}.submit"
-echo "docker_image = ${dockerImage}" >> "${outputDir}/${outputName}.submit"
-echo "executable = ${initialdir}/commands/ants_registration.sh" >> "${outputDir}/${outputName}.submit"
-echo "request_cpus = ${cpus}" >> "${outputDir}/${outputName}.submit"
-echo "request_memory = ${requestedMemory}" >> "${outputDir}/${outputName}.submit"
-echo "Error = output/logs/\$(Cluster).\$(Process).err" >> "${outputDir}/${outputName}.submit"
-echo "Output = output/logs/\$(Cluster).\$(Process).out" >> "${outputDir}/${outputName}.submit"
-echo "Log = output/logs/\$(Cluster).\$(Process).log" >> "${outputDir}/${outputName}.submit"
-echo "initialdir = ${initialdir}" >> "${outputDir}/${outputName}.submit"
-echo "" >> "${outputDir}/${outputName}.submit"
+echo "universe = docker" > ${outfile}
+echo "docker_image = ${dockerImage}" >> ${outfile}
+echo "executable = ${initialdir}/commands/ants_registration.sh" >> ${outfile}
+echo "request_cpus = ${cpus}" >> ${outfile}
+echo "request_memory = ${requestedMemory}" >> ${outfile}
+echo "Error = output/logs/\$(Cluster).\$(Process).err" >> ${outfile}
+echo "Output = output/logs/\$(Cluster).\$(Process).out" >> ${outfile}
+echo "Log = output/logs/\$(Cluster).\$(Process).log" >> ${outfile}
+echo "initialdir = ${initialdir}" >> ${outfile}
+echo "" >> ${outfile}
 
 # loop through _01/primary images
 moving_images=`ls images/*_${semanticChannelPrimary}.${fileExtension}`
@@ -178,13 +179,13 @@ for image in ${moving_images}; do
 	transferImageFiles=`ls images/$imageStem* | tr "\n" "," | sed -E s/,$//`
 	transferFiles="${transferImageFiles},${refbrain},${antscall}"
 	if [[ ! -z $mask ]]; then transferFiles="${transferFiles},masks/${mask}"; fi
-	echo "" >> "${outputDir}/${outputName}.submit"
-	echo "transfer_input_files = ${transferFiles}" >> "${outputDir}/${outputName}.submit"
-	echo "transfer_output_files = ${dockerOutdir}" >> "${outputDir}/${outputName}.submit"
+	echo "" >> ${outfile}
+	echo "transfer_input_files = ${transferFiles}" >> ${outfile}
+	echo "transfer_output_files = ${dockerOutdir}" >> ${outfile}
 	args="arguments = -f `basename $refbrain` -m `basename $image` -a `basename $antscall` -T $cpus"
 	if [[ ! -z ${mask} ]]; then  args="${args} -x $mask"; fi
 	if [[ ! -z ${ANTs_path} ]]; then args="${args} -p ${ANTs_path}"; fi
-	echo $args >> "${outputDir}/${outputName}.submit"
-	echo "" >> "${outputDir}/${outputName}.submit"
-	echo "queue" >> "${outputDir}/${outputName}.submit"
+	echo $args >> ${outfile}
+	echo "" >> ${outfile}
+	echo "queue" >> ${outfile}
 done
