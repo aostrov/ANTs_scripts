@@ -65,6 +65,7 @@ fileExtension="nrrd"
 outputName=`date=$(date '+%Y-%m-%d'); echo $date`
 outputDir=`pwd`/commands
 dockerImage="docker-registry.champalimaud.pt/ants"
+semanticChannelPrimary="01"
 
 while getopts ":hjf:x:a:p:T:M:t:o:n:s:e:d:" OPT; do
 	case $OPT in
