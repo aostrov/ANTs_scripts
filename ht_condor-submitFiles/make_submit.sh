@@ -160,8 +160,9 @@ relative2myArea(){
 
 
 initialdir=`pwd`
+# relativeRootDir='my_area'
 execDir=`relative2myArea $initialdir`
-execDir2=`echo $initialdir | sed 's/^[\/[[:alnum:]]*\/]*\(my_area[\/[[:alnum:]]*]*$\)/\1/'`
+execDir2="`echo $initialdir | sed 's/^[\/[[:alnum:]]*\/]*\(my_area[\/[[:alnum:]]*]*$\)/\1/'`/"
 
 cpus=$thread_number
 requestedMemory=$memory_requested
