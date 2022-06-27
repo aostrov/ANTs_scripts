@@ -66,6 +66,7 @@ outputName=`date=$(date '+%Y-%m-%d'); echo $date`
 outputDir=`pwd`/commands
 dockerImage="docker-registry.champalimaud.pt/ants"
 semanticChannelPrimary="01"
+logsFolder="logs"
 
 while getopts ":hjf:x:a:p:T:M:t:o:n:s:e:d:" OPT; do
 	case $OPT in
@@ -127,7 +128,7 @@ if [[ $OPTIND -eq 1 ]]; then
 	exit 0
 fi
 
-mkdir -p logs
+mkdir -p ${logsFolder}
 
 stripEndings(){
 	# remove path information
@@ -179,9 +180,9 @@ echo "docker_image = ${dockerImage}" >> ${outfile}
 echo "executable = ${execDir}ants_registration.sh" >> ${outfile}
 echo "request_cpus = ${cpus}" >> ${outfile}
 echo "request_memory = ${requestedMemory}" >> ${outfile}
-echo "Error = logs/\$(Cluster).\$(Process).err" >> ${outfile}
-echo "Output = logs/\$(Cluster).\$(Process).out" >> ${outfile}
-echo "Log = logs/\$(Cluster).\$(Process).log" >> ${outfile}
+echo "Error = ${logsFolder}/\$(Cluster).\$(Process).err" >> ${outfile}
+echo "Output = ${logsFolder}/\$(Cluster).\$(Process).out" >> ${outfile}
+echo "Log = ${logsFolder}/\$(Cluster).\$(Process).log" >> ${outfile}
 echo "initialdir = ${initialdir}" >> ${outfile}
 echo "" >> ${outfile}
 
