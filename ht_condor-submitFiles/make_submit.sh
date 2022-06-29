@@ -6,7 +6,7 @@
 Usage() {
     cat <<USAGE
 Usage:
-`basename $0` -f Template/Fixed Image -a ANTsCallFile <other options>
+`basename $0` -f [Template/Fixed Image] -a ANTsCallFile <other options>
 Compulsory arguments:
 -f: File name (including file type) of the template (fixed) image to be used as the 
 	target space for the registration. [not implemented:'-a' can be substituted for '-f' if a bridging
