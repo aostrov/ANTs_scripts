@@ -177,7 +177,7 @@ outfile="${outputDir}/${outputName}.submit"
 # write header info
 echo "universe = docker" > ${outfile}
 echo "docker_image = ${dockerImage}" >> ${outfile}
-echo "executable = ${execDir}ants_registration.sh" >> ${outfile}
+echo "executable = ${execDir}commands/ants_registration.sh" >> ${outfile}
 echo "request_cpus = ${cpus}" >> ${outfile}
 echo "request_memory = ${requestedMemory}" >> ${outfile}
 echo "Error = ${logsFolder}/\$(Cluster).\$(Process).err" >> ${outfile}
