@@ -22,6 +22,11 @@ Optional arguments:
 	can be of any image format supported by ANTs (normally: tif, nrrd, nii.gz). Defaults to
 	'nrrd'.	
 -o: Output directory. Defaults to "commands".
+-t: This controls the transformation of the various channels.
+	0: don't run any transformations.
+	1: Transform only the first channel/counterstain channel (often tERK).
+	2: [Default] Transform all available channels that match the naming pattern of the 
+	first channel.	
 -n: Name of the output submit script. Defaults to `date=$(date '+%Y-%m-%d'); echo $date`.submit.	
 -h: print the Usage message for `basename $0`
 -x: A single mask file to be passed to the registration. For now, this assumes
@@ -67,8 +72,9 @@ outputDir=`pwd`/commands
 dockerImage="docker-registry.champalimaud.pt/ants"
 semanticChannelPrimary="01"
 logsFolder="logs"
+numChannels=2
 
-while getopts ":hjf:x:a:p:T:M:t:o:n:s:e:d:" OPT; do
+while getopts ":hjf:x:a:p:T:M:t:o:n:s:e:d:t:" OPT; do
 	case $OPT in
 		h)
 			Usage >&2
@@ -82,6 +88,9 @@ while getopts ":hjf:x:a:p:T:M:t:o:n:s:e:d:" OPT; do
 		;;
 		a)
 			antsCallFile=$OPTARG
+		;;
+		t)
+			numChannels=$OPTARG
 		;;
 		s)
 			semanticChannelPrimary=$OPTARG
@@ -198,7 +207,7 @@ for image in ${moving_images}; do
 	echo "" >> ${outfile}
 	echo "transfer_input_files = ${transferFiles}" >> ${outfile}
 	echo "transfer_output_files = ${dockerOutdir}" >> ${outfile}
-	args="arguments = -f `basename $refbrain` -m `basename $image` -a `basename $antscall` -T $cpus"
+	args="arguments = -f `basename $refbrain` -m `basename $image` -a `basename $antscall` -T $cpus -t $numChannels"
 	if [[ ! -z ${mask} ]]; then  args="${args} -x $mask"; fi
 	if [[ ! -z ${ANTs_path} ]]; then args="${args} -p ${ANTs_path}"; fi
 	echo $args >> ${outfile}
