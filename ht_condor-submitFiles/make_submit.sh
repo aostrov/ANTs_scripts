@@ -197,20 +197,23 @@ echo "" >> ${outfile}
 
 # loop through _01/primary images
 moving_images=`ls images/*_${semanticChannelPrimary}.${fileExtension}`
+antsCalls=`ls commands/*.antsCall`
 
-for image in ${moving_images}; do
-	thisImage=`stripEndings $image`
-	imageStem=${thisImage%_$semanticChannelPrimary}
-	transferImageFiles=`ls images/$imageStem* | tr "\n" "," | sed -E s/,$//`
-	transferFiles="${transferImageFiles},${refbrain},${antscall}"
-	if [[ ! -z $mask ]]; then transferFiles="${transferFiles},masks/${mask}"; fi
-	echo "" >> ${outfile}
-	echo "transfer_input_files = ${transferFiles}" >> ${outfile}
-	echo "transfer_output_files = ${dockerOutdir}" >> ${outfile}
-	args="arguments = -f `basename $refbrain` -m `basename $image` -a `basename $antscall` -T $cpus -t $numChannels"
-	if [[ ! -z ${mask} ]]; then  args="${args} -x $mask"; fi
-	if [[ ! -z ${ANTs_path} ]]; then args="${args} -p ${ANTs_path}"; fi
-	echo $args >> ${outfile}
-	echo "" >> ${outfile}
-	echo "queue" >> ${outfile}
+for call in ${antsCalls}; do
+	for image in ${moving_images}; do
+		thisImage=`stripEndings $image`
+		imageStem=${thisImage%_$semanticChannelPrimary}
+		transferImageFiles=`ls images/$imageStem* | tr "\n" "," | sed -E s/,$//`
+		transferFiles="${transferImageFiles},${refbrain},${antscall}"
+		if [[ ! -z $mask ]]; then transferFiles="${transferFiles},masks/${mask}"; fi
+		echo "" >> ${outfile}
+		echo "transfer_input_files = ${transferFiles}" >> ${outfile}
+		echo "transfer_output_files = ${dockerOutdir}" >> ${outfile}
+		args="arguments = -f `basename $refbrain` -m `basename $image` -a `basename ${call}` -T $cpus -t $numChannels"
+		if [[ ! -z ${mask} ]]; then  args="${args} -x $mask"; fi
+		if [[ ! -z ${ANTs_path} ]]; then args="${args} -p ${ANTs_path}"; fi
+		echo $args >> ${outfile}
+		echo "" >> ${outfile}
+		echo "queue" >> ${outfile}
+	done
 done
