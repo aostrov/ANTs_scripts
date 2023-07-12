@@ -45,4 +45,9 @@ Even more convenient, you can simply __cd__ without any arguments, and that is a
 At the moment, ants_registration.sh supports bridging, but make_submit.sh does not, so auto-generated submit scripts for
 bridging registrations is not yet possible, but can be arranged if enough people would like it.
 
+Be careful when cloning this repository to a windows machine. Most Git installations default to changing line endings to those native
+to the local system. If you were to then move the cloned files to the cluster, your submissions will fail with semi-cryptic error
+messages. You can open each of the files in Sublime Text and go to View -> Line Endings and change the line endings to Unix and
+re-save the file. There is probably also some git magic to prevent it from changing the line endings...
+
 Please feel free to make suggestions and fixes as necessary.
