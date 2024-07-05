@@ -251,6 +251,7 @@ fixed_stem=`stripEndings ${fixed}`
 moving_stem=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${moving_stem} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
+affineStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_AffineOnly
 
 if [[ -z $affine ]] ; then
 	echo "affine is undefined"
@@ -284,6 +285,7 @@ fi
 
 # registrationOutput = registration/${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 registrationOutput=${outputDir}${outputStem}
+affineOutput=${outputDir}${affineStem}
 
 #######################
 ### Input -> Output ###
@@ -494,3 +496,18 @@ for i in ${range}; do
 		echo ""
 	fi
 done
+
+semanticChannelAffine=`stripEndings ${moving} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+
+${ANTs_path}/antsApplyTransforms \
+	-d $dimensions \
+	-v 1 \
+	--float 1 \
+	-n WelchWindowedSinc \
+	-f 0 \
+	-i ${moving} \
+	-r ${fixed} \
+	-o "${affineOutput}_${semanticChannelAffine}.nii.gz" \
+	-t ${affine}
+
+ConvertImagePixelType "${affineOutput}_${semanticChannelAffine}.nii.gz" "${affineOutput}_${semanticChannelAffine}.nii.gz" 3
