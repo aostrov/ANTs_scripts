@@ -251,7 +251,6 @@ fixed_stem=`stripEndings ${fixed}`
 moving_stem=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${moving_stem} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
-affineStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_AffineOnly
 
 if [[ -z $affine ]] ; then
 	echo "affine is undefined"
@@ -285,7 +284,6 @@ fi
 
 # registrationOutput = registration/${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 registrationOutput=${outputDir}${outputStem}
-affineOutput=${outputDir}${affineStem}
 
 #######################
 ### Input -> Output ###
