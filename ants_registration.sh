@@ -34,6 +34,8 @@
 # - Automatic transformation of Nth channels
 #  - First channel image name must end in _01.[nrrd,nii.gz,tif] unless '-c' flag is used
 #  - Nth channel image name must end in _0N.[nrrd,nii.gz,tif]
+# Updated 2025
+# - Add option to save as 8bit
 
 Usage() {
     cat <<USAGE
@@ -72,6 +74,7 @@ Optional arguments:
 -B: Set the bit depth of the transformed images to 16 bits.
 	0: Use the native 32bit output of the ANTs transformation.
 	1: (Default) Convert to 16bit output images.
+	2: Convert to 8bit output images.
 
 -x: A single mask file to be passed to the registration. For now, this assumes
 	that the mask will be applied to the fixed image. The mask should be an 8bit binary 
@@ -470,17 +473,27 @@ for i in ${range}; do
 		    #  3  :  unsigned short
 		    #  4  :  int
 		    #  5  :  unsigned int
-			
+
+
 			if [[ $outputAs16 -gt 0 ]] ; then
-				if [[ -s ${nthChannelOut} ]] ; then 
-					echo ""
+						  outputBitDepth=0
+			  if [[ $outputAs16 -eq 1 ]] ; then
+			  	echo ""
 					echo "Converting to 16bit"
 					echo ""
-					ConvertImagePixelType ${nthChannelOut} ${nthChannelOut} 3
+			  	outputBitDepth=3
+			  elif [[ $outputAs16 -eq 2 ]] ; then
+			  	echo ""
+					echo "Converting to 8bit"
+					echo ""
+			  	outputBitDepth=1
+			  fi
+				if [[ -s ${nthChannelOut} ]] ; then 
+					ConvertImagePixelType ${nthChannelOut} ${nthChannelOut} $outputBitDepth
 				else
 					echo "${nthChannelOut} does not exist,"
 					echo "this is weird!"
-					echo "Skipping conversion to 16bit..."
+					echo "Skipping conversion to 8/16bit..."
 					echo ""
 				fi
 			fi
@@ -494,18 +507,3 @@ for i in ${range}; do
 		echo ""
 	fi
 done
-
-semanticChannelAffine=`stripEndings ${moving} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
-
-${ANTs_path}/antsApplyTransforms \
-	-d $dimensions \
-	-v 1 \
-	--float 1 \
-	-n WelchWindowedSinc \
-	-f 0 \
-	-i ${moving} \
-	-r ${fixed} \
-	-o "${affineOutput}_${semanticChannelAffine}.nii.gz" \
-	-t ${affine}
-
-ConvertImagePixelType "${affineOutput}_${semanticChannelAffine}.nii.gz" "${affineOutput}_${semanticChannelAffine}.nii.gz" 3
