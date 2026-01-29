@@ -67,7 +67,8 @@ Optional arguments:
 	0: don't run any transformations.
 	1: Transform only the first channel/counterstain channel (often tERK).
 	2: (Default) Transform all available channels that match the naming pattern of the 
-	first channel.	
+	first channel.
+	3: Same as 2 but also include a transformation of the affine xform.	
 
 -h: print the Usage message for `basename $0`
 
@@ -128,6 +129,7 @@ outputDir="registration"
 existing_outputs=0
 all_outputs_exists=0
 dimensions=3
+affine_xform=0
 
 # TODO: check to remove later
 bridging_warp="CCU-bridging1Warp.nii.gz"
@@ -177,9 +179,9 @@ while getopts ":hdjf:A:m:x:a:p:T:b:w:r:t:B:o:" OPT; do
 		;;
 		t)
 			single=$OPTARG
-			if [ $single -gt 2 ] ; then
+			if [ $single -gt 3 ] ; then
 				echo "-s is outside of range"
-				echo "Please choose from 0, 1, or 2"
+				echo "Please choose from 0, 1, 2, or 3"
 				echo use `basename $0` -h to see a list of valid inputs
 				exit
 			fi
@@ -254,6 +256,7 @@ fixed_stem=`stripEndings ${fixed}`
 moving_stem=`stripEndings ${moving}`
 semanticChannelPrimary=`echo ${moving_stem} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
 outputStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
+affineStem=${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_AffineOnly_$antsCallFile
 
 if [[ -z $affine ]] ; then
 	echo "affine is undefined"
@@ -287,6 +290,7 @@ fi
 
 # registrationOutput = registration/${fixed_stem}_fixed_${moving_stem%_${semanticChannelPrimary}}_moving_$antsCallFile
 registrationOutput=${outputDir}${outputStem}
+affineOutput=${outputDir}${affineStem}
 
 #######################
 ### Input -> Output ###
@@ -297,9 +301,13 @@ if [ $single -eq 0 ] ; then
 elif [ $single -eq 1 ] ; then
 	echo "Only transform the reference channel."
 	range=$moving
-else
+elif [ $single -eq 2 ] ; then
 	echo "Tranformation of all input images"
 	range=`ls ${moving_stem%_${semanticChannelPrimary}}*`
+else
+	echo "Tranformation of all input images plus an affine transformation"
+	range=`ls ${moving_stem%_${semanticChannelPrimary}}*`
+	affine_xform=1
 fi
 
 total_images=`echo $range | wc -w`
@@ -506,4 +514,19 @@ for i in ${range}; do
 		echo "Skipping"
 		echo ""
 	fi
+done
+
+if [[ $affine_xform -eq 1 ]] ; then
+	semanticChannelAffine=`stripEndings ${moving} | sed -E 's/.*_([[:alnum:]]*$)/\1/'`
+	${ANTs_path}/antsApplyTransforms \
+	    -d $dimensions \
+	    -v 1 \
+	    --float 1 \
+	    -n WelchWindowedSinc \
+	    -f 0 \
+	    -i ${moving} \
+	    -r ${fixed} \
+	    -o "${affineOutput}_${semanticChannelAffine}.nii.gz" \
+	    -t ${affine}
+	ConvertImagePixelType "${affineOutput}_${semanticChannelAffine}.nii.gz" "${affineOutput}_${semanticChannelAffine}.nii.gz" 1
 done
